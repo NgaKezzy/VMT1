@@ -22,7 +22,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 
 # ─── Đường dẫn ──────────────────────────────────────────────────────────────
 BASE = os.path.dirname(os.path.abspath(__file__))
-OUT  = os.path.join(BASE, "VMT1_HoSoDoAn_NguyenVanNga.pdf")
+OUT  = os.path.join(BASE, "VMT1_NguyenVanNga_2603ita0022.pdf")
 
 LOGO_TOPICA = os.path.join(BASE, "cover_image1.png")
 
@@ -418,8 +418,8 @@ def section_banner(title, subtitle, hex_color):
 
 
 # ─── Image card ─────────────────────────────────────────────────────────────
-IMG_W = (CW - 0.5*cm) / 2    # 2 ảnh / hàng
-IMG_H = IMG_W * 0.72          # tỷ lệ cố định
+IMG_W = CW       # 1 ảnh / trang cho GV dễ xem
+IMG_H = 20*cm    # khung tối đa; ảnh giữ đúng tỷ lệ gốc
 
 def image_card(img_path, title, caption):
     """Trả về một Table-card chứa ảnh + tiêu đề + chú thích."""
@@ -428,7 +428,7 @@ def image_card(img_path, title, caption):
         img_el = Spacer(IMG_W, IMG_H)
     else:
         try:
-            img_el = Image(full, width=IMG_W, height=IMG_H)
+            img_el = Image(full, width=IMG_W, height=IMG_H, kind="proportional")
         except:
             img_el = Spacer(IMG_W, IMG_H)
 
@@ -439,7 +439,7 @@ def image_card(img_path, title, caption):
 
     inner = Table(
         [[img_el], [p(title, st_title)], [p(caption, st_caption)]],
-        colWidths=[IMG_W]
+        colWidths=[getattr(img_el, "drawWidth", IMG_W)], hAlign="CENTER"
     )
     inner.setStyle(TableStyle([
         ("BACKGROUND",   (0,0),(-1,-1), C_WHITE),
@@ -463,39 +463,9 @@ def group_elements(group):
     els.append(section_banner(group["title"], group["subtitle"], group["color"]))
     els.append(Spacer(1, 0.35*cm))
 
-    images = group["images"]
-    # Xếp 2 ảnh / hàng
-    for i in range(0, len(images), 2):
-        row_cells = []
-        for img_file, title, caption in images[i:i+2]:
-            row_cells.append(image_card(img_file, title, caption))
-        # Padding giữa 2 ảnh
-        if len(row_cells) == 1:
-            row_cells.append(Spacer(IMG_W, 1))
-        row_tbl = Table([row_cells], colWidths=[IMG_W, IMG_W], hAlign="LEFT",
-                        spaceAfter=0.3*cm)
-        row_tbl.setStyle(TableStyle([
-            ("LEFTPADDING",  (0,0),(-1,-1), 0),
-            ("RIGHTPADDING", (0,0),(-1,-1), 0),
-            ("TOPPADDING",   (0,0),(-1,-1), 0),
-            ("BOTTOMPADDING",(0,0),(-1,-1), 0),
-            ("ALIGN",        (0,0),(-1,-1), "LEFT"),
-            ("VALIGN",       (0,0),(-1,-1), "TOP"),
-            ("COLPADDING",   (0,0),(0,-1),  0),
-            # gap giữa 2 cột
-        ]))
-        # Thêm khoảng cách giữa 2 ảnh
-        gap_row = Table([[row_cells[0], Spacer(0.5*cm, 1), row_cells[1]]],
-                        colWidths=[IMG_W, 0.5*cm, IMG_W])
-        gap_row.setStyle(TableStyle([
-            ("LEFTPADDING",  (0,0),(-1,-1), 0),
-            ("RIGHTPADDING", (0,0),(-1,-1), 0),
-            ("TOPPADDING",   (0,0),(-1,-1), 0),
-            ("BOTTOMPADDING",(0,0),(-1,-1), 0),
-            ("VALIGN",       (0,0),(-1,-1), "TOP"),
-        ]))
-        els.append(gap_row)
-        els.append(Spacer(1, 0.25*cm))
+    for img_file, title, caption in group["images"]:
+        els.append(image_card(img_file, title, caption))
+        els.append(Spacer(1, 0.4*cm))
 
     return els
 
